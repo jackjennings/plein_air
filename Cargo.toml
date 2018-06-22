@@ -6,3 +6,8 @@ authors = ["Jack Jennings <jack@standard-library.com>"]
 [dependencies]
 rocket = "0.3.13"
 rocket_codegen = "0.3.13"
+
+[dependencies.rocket_contrib]
+version = "0.3.13"
+default-features = false
+features = ["tera_templates"]

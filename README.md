@@ -1,2 +1,3 @@
-# plein_air
-plain test publishing web server
+# Plein Air
+
+A web server for publishing plain text.

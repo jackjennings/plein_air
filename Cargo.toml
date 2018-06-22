@@ -1,0 +1,8 @@
+[package]
+name = "plein_air"
+version = "0.1.0"
+authors = ["Jack Jennings <jack@standard-library.com>"]
+
+[dependencies]
+rocket = "0.3.13"
+rocket_codegen = "0.3.13"

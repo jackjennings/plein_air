@@ -25,6 +25,7 @@ fn render(filepath: PathBuf) -> Option<Template> {
         let mut content = String::new();
 
         f.read_to_string(&mut content).ok();
+        context.insert("title", content.lines().next().unwrap_or("").to_string());
         context.insert("content", auto_link(&content, &[]));
 
         Template::render("page", context)

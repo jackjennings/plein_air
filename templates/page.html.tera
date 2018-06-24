@@ -9,5 +9,5 @@
       }
     </style>
   </head>
-  <body>{{ content }}</body>
+  <body>{{ content | safe }}</body>
 </html>

@@ -3,6 +3,7 @@
 
 extern crate rocket;
 extern crate rocket_contrib;
+extern crate autolink;
 
 use rocket::fairing::AdHoc;
 use rocket::request::Request;
@@ -12,6 +13,7 @@ use rocket_contrib::Template;
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use autolink::auto_link;
 
 struct ContentDirectory(String);
 
@@ -23,7 +25,7 @@ fn render(filepath: PathBuf) -> Option<Template> {
         let mut content = String::new();
 
         f.read_to_string(&mut content).ok();
-        context.insert("content", content);
+        context.insert("content", auto_link(&content, &[]));
 
         Template::render("page", context)
     }).ok()

@@ -1,10 +1,11 @@
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 
+extern crate autolink;
 extern crate rocket;
 extern crate rocket_contrib;
-extern crate autolink;
 
+use autolink::auto_link;
 use rocket::fairing::AdHoc;
 use rocket::request::Request;
 use rocket::response::NamedFile;
@@ -13,23 +14,25 @@ use rocket_contrib::Template;
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use autolink::auto_link;
 
 struct ContentDirectory(String);
 
 fn render(filepath: PathBuf) -> Option<Template> {
     let file = NamedFile::open(filepath);
 
-    file.map(|mut f| {
-        let mut context = HashMap::new();
-        let mut content = String::new();
+    file.map(|f| Template::render("page", context_for(f))).ok()
+}
 
-        f.read_to_string(&mut content).ok();
-        context.insert("title", content.lines().next().unwrap_or("").to_string());
-        context.insert("content", auto_link(&content, &[]));
+fn context_for(mut file: NamedFile) -> HashMap<String, String> {
+    let mut content = String::new();
+    file.read_to_string(&mut content).ok();
 
-        Template::render("page", context)
-    }).ok()
+    let title = content.lines().next().unwrap_or("").to_string();
+
+    let mut context = HashMap::new();
+    context.insert(String::from("title"), title);
+    context.insert(String::from("content"), auto_link(&content, &[]));
+    context
 }
 
 #[get("/<path..>")]
@@ -63,4 +66,19 @@ fn main() {
         }))
         .attach(Template::fairing())
         .launch();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_context_for() {
+        let file = NamedFile::open("./test/pages/foo/index.txt");
+        let mut expected = HashMap::new();
+        expected.insert(String::from("title"), String::from("Hell world!"));
+        expected.insert(String::from("content"), String::from("Hell world!\n"));
+
+        assert_eq!(expected, context_for(file.unwrap()))
+    }
 }

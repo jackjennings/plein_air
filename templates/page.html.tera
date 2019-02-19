@@ -10,6 +10,21 @@
         white-space: pre-wrap;
         max-width: 70ch;
       }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: black;
+          color: white;
+        }
+
+        a {
+          color: orange;
+        }
+
+        a:visited {
+          color: yellow;
+        }
+      }
     </style>
   </head>
   <body>{{ content | safe }}</body>

@@ -1,8 +1,8 @@
-#![feature(plugin)]
-#![plugin(rocket_codegen)]
+#![feature(proc_macro_hygiene, decl_macro)]
+
+#[macro_use] extern crate rocket;
 
 extern crate autolink;
-extern crate rocket;
 extern crate rocket_contrib;
 
 use autolink::auto_link;
@@ -10,7 +10,7 @@ use rocket::fairing::AdHoc;
 use rocket::request::Request;
 use rocket::response::NamedFile;
 use rocket::State;
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -47,7 +47,7 @@ fn index(content_directory: State<ContentDirectory>) -> Option<Template> {
     render(Path::new(root).join("index.txt"))
 }
 
-#[error(404)]
+#[catch(404)]
 fn not_found(_req: &Request) -> &'static str {
     "Not Found"
 }
@@ -55,8 +55,8 @@ fn not_found(_req: &Request) -> &'static str {
 fn main() {
     rocket::ignite()
         .mount("/", routes![page, index])
-        .catch(errors![not_found])
-        .attach(AdHoc::on_attach(|rocket| {
+        .register(catchers![not_found])
+        .attach(AdHoc::on_attach("Content Config", |rocket| {
             let content_directory = match rocket.config().get_str("content_directory") {
                 Ok(dir) => dir.to_string(),
                 Err(_e) => panic!("must set content directory"),

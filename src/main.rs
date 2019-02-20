@@ -15,7 +15,9 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-struct ContentDirectory(String);
+struct Configuration {
+    content_directory: String
+}
 
 fn render(filepath: PathBuf) -> Option<Template> {
     let file = NamedFile::open(filepath);
@@ -36,14 +38,14 @@ fn context_for(mut file: NamedFile) -> HashMap<String, String> {
 }
 
 #[get("/<path..>")]
-fn page(path: PathBuf, content_directory: State<ContentDirectory>) -> Option<Template> {
-    let root = &content_directory.0;
+fn page(path: PathBuf, configuration: State<Configuration>) -> Option<Template> {
+    let root = &configuration.content_directory;
     render(Path::new(root).join(path).join("index.txt"))
 }
 
 #[get("/")]
-fn index(content_directory: State<ContentDirectory>) -> Option<Template> {
-    let root = &content_directory.0;
+fn index(configuration: State<Configuration>) -> Option<Template> {
+    let root = &configuration.content_directory;
     render(Path::new(root).join("index.txt"))
 }
 
@@ -61,8 +63,11 @@ fn main() {
                 Ok(dir) => dir.to_string(),
                 Err(_e) => panic!("must set content directory"),
             };
+            let configuration = Configuration {
+                content_directory: content_directory.to_string()
+            };
 
-            Ok(rocket.manage(ContentDirectory(content_directory.to_string())))
+            Ok(rocket.manage(configuration))
         }))
         .attach(Template::fairing())
         .launch();

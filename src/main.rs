@@ -19,10 +19,16 @@ struct Configuration {
     content_directory: String
 }
 
-fn render(filepath: PathBuf) -> Option<Template> {
+fn render_html(filepath: PathBuf) -> Option<Template> {
     let file = NamedFile::open(filepath);
-
     file.map(|f| Template::render("page", context_for(f))).ok()
+}
+
+fn render_text(filepath: PathBuf) -> Option<String> {
+    let mut file = NamedFile::open(filepath).ok()?;
+    let mut content = String::new();
+    file.read_to_string(&mut content).ok()?;
+    Some(content)
 }
 
 fn context_for(mut file: NamedFile) -> HashMap<String, String> {
@@ -40,13 +46,15 @@ fn context_for(mut file: NamedFile) -> HashMap<String, String> {
 #[get("/<path..>")]
 fn page(path: PathBuf, configuration: State<Configuration>) -> Option<Template> {
     let root = &configuration.content_directory;
-    render(Path::new(root).join(path).join("index.txt"))
+    let filepath = Path::new(root).join(path).join("index.txt");
+    render_html(filepath)
 }
 
 #[get("/")]
 fn index(configuration: State<Configuration>) -> Option<Template> {
     let root = &configuration.content_directory;
-    render(Path::new(root).join("index.txt"))
+    let filepath = Path::new(root).join("index.txt");
+    render_html(filepath)
 }
 
 #[catch(404)]
@@ -85,5 +93,13 @@ mod tests {
         expected.insert(String::from("content"), String::from("Hell world!\n"));
 
         assert_eq!(expected, context_for(file.unwrap()))
+    }
+
+    #[test]
+    fn test_render_text() {
+        let text = render_text(Path::new("./test/pages/index.txt").to_path_buf());
+        let expected = Some(String::from("Hello index\n"));
+
+        assert_eq!(expected, text)
     }
 }

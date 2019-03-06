@@ -6,7 +6,7 @@ Los Angeles, CA
 Standard Library
 Director
 https://standard-library.com
-http://github.com/standard-library
+https://github.com/standard-library
 
 ---
 

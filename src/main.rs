@@ -2,10 +2,10 @@
 
 #[macro_use] extern crate rocket;
 
-extern crate autolink;
+mod format;
+
 extern crate rocket_contrib;
 
-use autolink::auto_link;
 use rocket::fairing::AdHoc;
 use rocket::request::Request;
 use rocket::response::NamedFile;
@@ -33,7 +33,7 @@ fn context_for(mut file: NamedFile) -> HashMap<String, String> {
 
     let mut context = HashMap::new();
     context.insert(String::from("title"), title);
-    context.insert(String::from("content"), auto_link(&content, &[]));
+    context.insert(String::from("content"), format::autolink(&content));
     context
 }
 

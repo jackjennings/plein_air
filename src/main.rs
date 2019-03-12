@@ -33,14 +33,12 @@ fn render(filepath: PathBuf) -> Option<Page> {
 
 #[get("/<path..>")]
 fn page(path: PathBuf, configuration: State<Configuration>) -> Option<Page> {
-    let root = &configuration.content_directory;
-    render(root.join(path).join("index.txt"))
+    render(configuration.content_directory.join(path).join("index.txt"))
 }
 
 #[get("/")]
 fn index(configuration: State<Configuration>) -> Option<Page> {
-    let root = &configuration.content_directory;
-    render(root.join("index.txt"))
+    render(configuration.content_directory.join("index.txt"))
 }
 
 #[catch(404)]

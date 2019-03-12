@@ -16,7 +16,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 struct Configuration {
-    content_directory: String,
+    content_directory: PathBuf,
 }
 
 fn render(filepath: PathBuf) -> Option<Page> {
@@ -34,13 +34,13 @@ fn render(filepath: PathBuf) -> Option<Page> {
 #[get("/<path..>")]
 fn page(path: PathBuf, configuration: State<Configuration>) -> Option<Page> {
     let root = &configuration.content_directory;
-    render(Path::new(root).join(path).join("index.txt"))
+    render(root.join(path).join("index.txt"))
 }
 
 #[get("/")]
 fn index(configuration: State<Configuration>) -> Option<Page> {
     let root = &configuration.content_directory;
-    render(Path::new(root).join("index.txt"))
+    render(root.join("index.txt"))
 }
 
 #[catch(404)]
@@ -58,7 +58,7 @@ fn main() {
                 Err(_e) => panic!("must set content directory"),
             };
             let configuration = Configuration {
-                content_directory: content_directory.to_string(),
+                content_directory: Path::new(&content_directory).to_path_buf(),
             };
 
             Ok(rocket.manage(configuration))

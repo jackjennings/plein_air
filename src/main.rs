@@ -7,8 +7,10 @@ extern crate rocket_contrib;
 
 use autolink::auto_link;
 use rocket::fairing::AdHoc;
-use rocket::request::Request;
 use rocket::response::NamedFile;
+use rocket::http::Status;
+use rocket::request::{self, Request, FromRequest};
+use rocket::Outcome;
 use rocket::State;
 use rocket_contrib::templates::Template;
 use std::collections::HashMap;
@@ -17,6 +19,41 @@ use std::path::{Path, PathBuf};
 
 struct Configuration {
     content_directory: String
+}
+
+#[derive(Debug)]
+enum UserAgentError {
+    BadCount,
+    Missing
+}
+
+struct UserAgent(String);
+
+impl<'a, 'r> FromRequest<'a, 'r> for UserAgent {
+    type Error = UserAgentError;
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+        let keys: Vec<_> = request.headers().get("user-agent").collect();
+        match keys.len() {
+            0 => Outcome::Failure((Status::BadRequest, UserAgentError::Missing)),
+            1 => Outcome::Success(UserAgent(keys[0].to_string())),
+            _ => Outcome::Failure((Status::BadRequest, UserAgentError::BadCount))
+        }
+    }
+}
+
+#[derive(Responder)]
+enum PageContent {
+    Template,
+    String
+}
+
+fn render(user_agent: UserAgent, filepath: PathBuf) -> Option<PageContent> {
+    if user_agent.0.starts_with("curl") {
+        render_text(filepath)
+    } else {
+        render_html(filepath)
+    }
 }
 
 fn render_html(filepath: PathBuf) -> Option<Template> {
@@ -44,17 +81,17 @@ fn context_for(mut file: NamedFile) -> HashMap<String, String> {
 }
 
 #[get("/<path..>")]
-fn page(path: PathBuf, configuration: State<Configuration>) -> Option<Template> {
+fn page(path: PathBuf, user_agent: UserAgent, configuration: State<Configuration>) -> Option<PageContent> {
     let root = &configuration.content_directory;
     let filepath = Path::new(root).join(path).join("index.txt");
-    render_html(filepath)
+    render(user_agent, filepath)
 }
 
 #[get("/")]
-fn index(configuration: State<Configuration>) -> Option<Template> {
+fn index(user_agent: UserAgent, configuration: State<Configuration>) -> Option<PageContent> {
     let root = &configuration.content_directory;
     let filepath = Path::new(root).join("index.txt");
-    render_html(filepath)
+    render(user_agent, filepath)
 }
 
 #[catch(404)]
